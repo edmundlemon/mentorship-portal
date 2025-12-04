@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STEM Mentorship Portal - Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+        }
+        h1 {
+            color: #667eea;
+            margin: 0 0 20px 0;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+        }
+        .error {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        #app-mount {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 STEM Portal Diagnostic</h1>
+        
+        <div class="status">
+            ✅ HTML Page Loaded Successfully
+        </div>
+        
+        <div class="status" id="vite-status">
+            ⏳ Checking Vite Connection...
+        </div>
+        
+        <div class="status" id="react-status">
+            ⏳ Checking React Mount...
+        </div>
+        
+        <div id="app-mount">
+            <div id="app"></div>
+        </div>
+        
+        <button onclick="location.reload()">Refresh Page</button>
+        
+        <script>
+            // Check if Vite is accessible
+            fetch('http://localhost:5173/@vite/client')
+                .then(() => {
+                    document.getElementById('vite-status').innerHTML = '✅ Vite Dev Server Connected';
+                    document.getElementById('vite-status').classList.remove('error');
+                })
+                .catch(() => {
+                    document.getElementById('vite-status').innerHTML = '❌ Vite Dev Server NOT Connected';
+                    document.getElementById('vite-status').classList.add('error');
+                });
+            
+            // Check if app div exists
+            setTimeout(() => {
+                const appDiv = document.getElementById('app');
+                if (appDiv) {
+                    if (appDiv.children.length > 0) {
+                        document.getElementById('react-status').innerHTML = '✅ React App Mounted!';
+                    } else {
+                        document.getElementById('react-status').innerHTML = '⚠️ App div exists but React not mounted';
+                        document.getElementById('react-status').classList.add('error');
+                    }
+                } else {
+                    document.getElementById('react-status').innerHTML = '❌ App div not found';
+                    document.getElementById('react-status').classList.add('error');
+                }
+            }, 2000);
+        </script>
+        
+        <!-- Load Vite -->
+        <script type="module" src="http://localhost:5173/@vite/client"></script>
+        <script type="module" src="http://localhost:5173/resources/js/app.js"></script>
+    </div>
+</body>
+</html>
