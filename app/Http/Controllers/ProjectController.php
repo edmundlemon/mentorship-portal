@@ -26,8 +26,8 @@ class ProjectController extends Controller
 		$project = Project::create([
 			'title' => $validated['title'],
 			'description' => $validated['description'],
-			'deadline' => $validated['deadline'],
-			'tags' => $validated['tags'],
+			'deadline' => $validated['deadline'] ?? null,
+			'tags' => $validated['tags'] ?? null,
 			'owner_id' => Auth::id(),
 		]);
 

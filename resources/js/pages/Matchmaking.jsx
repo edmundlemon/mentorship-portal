@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X, Heart, Check } from 'lucide-react';
 
@@ -102,7 +102,7 @@ export default function Matchmaking() {
 								</p>
 
 								<div className="flex flex-wrap gap-2 mb-8">
-									{currentCandidate.skills.map((skill, index) => (
+									{(currentCandidate.skills || []).map((skill, index) => (
 										<span key={index} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-sm">
 											{skill}
 										</span>

@@ -72,7 +72,7 @@ export default function ProjectBoards() {
 							<div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
 								<div className="flex items-center">
 									<Users size={16} className="mr-1" />
-									{project.members} members
+									{Array.isArray(project.members) ? project.members.length : 0} members
 								</div>
 								<div className="flex items-center">
 									<Calendar size={16} className="mr-1" />
