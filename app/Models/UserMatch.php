@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class UserMatch extends Model
+{
+	protected $table = 'matches';
+	protected $fillable = ['user_id', 'candidate_id', 'status'];
+
+	public function user()
+	{
+		return $this->belongsTo(User::class);
+	}
+
+	public function candidate()
+	{
+		return $this->belongsTo(User::class, 'candidate_id');
+	}
+}
