@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Match extends Model
+class Mentorship extends Model
 {
+    protected $table = 'matches'; // Keep table name as is for backward compatibility
     protected $fillable = ['user_id', 'candidate_id', 'status'];
 
     public function user()

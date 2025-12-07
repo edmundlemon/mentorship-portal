@@ -10,6 +10,7 @@ services:
             - 'host.docker.internal:host-gateway'
         ports:
             - '${APP_PORT:-8080}:80'
+            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -24,6 +25,13 @@ services:
             - pgsql
             - redis
             - mailpit
+        entrypoint: /bin/sh
+        command: >
+            -c "
+            chown -R sail:sail /var/www/html 2>/dev/null || true &&
+            su -s /bin/sh sail -c 'cd /var/www/html && npm install && nohup npm run dev >/tmp/vite.log 2>&1 &' &&
+            exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+            "
     pgsql:
         image: 'postgres:18-alpine'
         ports:

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import { api } from '../services/api';
 
-export default function Register({ onSwitchToLogin, onRegisterSuccess }) {
+export default function Register() {
 	const [formData, setFormData] = useState({
 		name: '',
 		email: '',
@@ -14,6 +15,7 @@ export default function Register({ onSwitchToLogin, onRegisterSuccess }) {
 	});
 	const [errors, setErrors] = useState({});
 	const [loading, setLoading] = useState(false);
+	const navigate = useNavigate();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -24,7 +26,7 @@ export default function Register({ onSwitchToLogin, onRegisterSuccess }) {
 			const response = await api.register(formData);
 			localStorage.setItem('token', response.token);
 			localStorage.setItem('user', JSON.stringify(response.user));
-			onRegisterSuccess(response.user, response.token);
+			navigate('/dashboard');
 		} catch (error) {
 			setErrors(error.errors || { email: error.message || 'Registration failed' });
 		} finally {
@@ -144,7 +146,7 @@ export default function Register({ onSwitchToLogin, onRegisterSuccess }) {
 							Already have an account?{' '}
 							<button
 								type="button"
-								onClick={onSwitchToLogin}
+								onClick={() => navigate('/login')}
 								className="text-blue-600 hover:text-blue-700 font-medium"
 							>
 								Sign In

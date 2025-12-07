@@ -21,4 +21,15 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::get('/projects', [App\Http\Controllers\ProjectController::class, 'index']);
 	Route::post('/projects', [App\Http\Controllers\ProjectController::class, 'store']);
 	Route::post('/projects/{project}/join', [App\Http\Controllers\ProjectController::class, 'join']);
+
+	// Forum
+	Route::get('/forum', [App\Http\Controllers\ForumController::class, 'index']);
+	Route::post('/forum', [App\Http\Controllers\ForumController::class, 'store']);
+	Route::get('/forum/{id}', [App\Http\Controllers\ForumController::class, 'show']);
+	Route::post('/forum/{id}/comments', [App\Http\Controllers\ForumController::class, 'storeComment']);
+
+	// Chat
+	Route::get('/chat', [App\Http\Controllers\ChatController::class, 'index']);
+	Route::get('/chat/{userId}', [App\Http\Controllers\ChatController::class, 'show']);
+	Route::post('/chat', [App\Http\Controllers\ChatController::class, 'store']);
 });

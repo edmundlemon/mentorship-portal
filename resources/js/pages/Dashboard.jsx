@@ -63,7 +63,13 @@ export default function Dashboard() {
 						title="Forums"
 						icon={<MessageSquare className="text-green-500" size={24} />}
 						description="Join the discussion"
-						onClick={() => navigate('/forums')}
+						onClick={() => navigate('/forum')}
+					/>
+					<DashboardCard
+						title="Chat"
+						icon={<MessageSquare className="text-blue-500" size={24} />}
+						description="Chat with mentors/mentees"
+						onClick={() => navigate('/chat')}
 					/>
 				</div>
 			</div>

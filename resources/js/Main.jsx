@@ -7,6 +7,9 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Matchmaking from './pages/Matchmaking';
 import ProjectBoards from './pages/ProjectBoards';
+import Forum from './pages/Forum';
+import ForumPostDetail from './pages/ForumPostDetail';
+import Chat from './pages/Chat';
 import Input from './components/Input';
 
 function Main() {
@@ -23,6 +26,9 @@ function Main() {
 				<Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
 				<Route path="/matchmaking" element={isAuthenticated ? <Matchmaking /> : <Navigate to="/login" />} />
 				<Route path="/projects" element={isAuthenticated ? <ProjectBoards /> : <Navigate to="/login" />} />
+				<Route path="/forum" element={isAuthenticated ? <Forum /> : <Navigate to="/login" />} />
+				<Route path="/forum/:id" element={isAuthenticated ? <ForumPostDetail /> : <Navigate to="/login" />} />
+				<Route path="/chat" element={isAuthenticated ? <Chat /> : <Navigate to="/login" />} />
 
 				<Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
 			</Routes>

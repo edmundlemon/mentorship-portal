@@ -66,4 +66,20 @@ export const api = {
 
         return response.json();
     },
+
+	async get(endpoint){
+		const response = await fetch(`${API_URL}/${endpoint}`, {
+			headers: {
+				'Authorization': `Bearer ${localStorage.getItem('token')}`,
+				'Accept': 'application/json',
+			}
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw error;
+		}
+
+		return response.json();
+	}
 };
