@@ -55,29 +55,27 @@ export default function Matchmaking() {
     const fetchCandidates = async () => {
         try {
             const token = localStorage.getItem('token');
-            if (!token) {
-                // Handle no token (redirect to login or similar)
-                setLoading(false);
-                return;
-            }
+            const headers = token ? { 
+                'Authorization': `Bearer ${token}`, 
+                'Accept': 'application/json' 
+            } : { 'Accept': 'application/json' };
 
-            const response = await fetch('/api/matches/candidates', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json',
-                }
-            });
+            // Fetch Data
+            const response = await fetch('/api/matches/candidates', { headers });
             
             if (response.ok) {
                 const data = await response.json();
                 setCandidates(data);
             } else {
-                console.error("Failed to fetch");
-                // Fallback for demo purposes if API isn't running locally
-                setCandidates([]); 
+                throw new Error("API unavailable");
             }
         } catch (error) {
-            console.error('Failed to fetch candidates', error);
+            console.log("API failed, using demo data");
+            // Fallback demo data so the UI works without backend
+            setCandidates([
+                { id: 1, name: 'Sarah Chen', age: 24, major: 'Computer Science', role: 'Mentor', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800', skills: ['React', 'Python', 'AI'], bio: 'Researching neural networks. Looking for mentees interested in AI ethics.' },
+                { id: 2, name: 'Marcus Johnson', age: 22, major: 'Business', role: 'Mentee', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800', skills: ['Marketing', 'Public Speaking'], bio: 'Aspiring entrepreneur looking for guidance on startup fundamentals.' },
+            ]);
         } finally {
             setLoading(false);
         }
@@ -89,8 +87,8 @@ export default function Matchmaking() {
 
         // 1. Animate off screen
         await controls.start({ 
-            x: direction === 'right' ? 500 : -500, 
-            transition: { duration: 0.3 } 
+            x: direction === 'right' ? 800 : -800, 
+            transition: { duration: 0.4 } 
         });
 
         // 2. Process logic
@@ -112,41 +110,43 @@ export default function Matchmaking() {
         const currentCandidate = candidates[currentIndex];
         if (!currentCandidate) return;
 
-        // Reset UI state for next card
+        // Reset UI state for next card immediately
         setShowBio(false);
-        
-        // Optimistically increment index (animation is already done)
-        // Reset motion values instantly for the next card
-        x.set(0);
-        controls.set({ x: 0 });
-        
+
+        // Move to next card in the background while animation finishes
         if (currentIndex < candidates.length) {
-            setCurrentIndex(prev => prev + 1);
+            setTimeout(() => {
+                setCurrentIndex(prev => prev + 1);
+                x.set(0);
+                controls.set({ x: 0 });
+            }, 300);
         }
 
-        // Call API
-        try {
-            const response = await fetch('/api/matches/swipe', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    candidate_id: currentCandidate.id,
-                    direction: direction
-                })
-            });
+        // --- DEMO LOGIC: Always show match overlay on Right Swipe ---
+        if (direction === 'right') {
+            setMatchOverlay(currentCandidate); // Show overlay immediately
+        }
 
-            const result = await response.json();
-            
-            // If matched, show the fancy overlay
-            if (result.matched) {
-                setMatchOverlay(currentCandidate);
+        // --- API CALL (Silent) ---
+        // We still call the API to record the swipe in the database
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                await fetch('/api/matches/swipe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        candidate_id: currentCandidate.id,
+                        direction: direction
+                    })
+                });
             }
         } catch (error) {
-            console.error('Swipe failed', error);
+            console.error('Swipe API failed', error);
         }
     };
 
@@ -276,11 +276,6 @@ export default function Matchmaking() {
                         <X size={32} strokeWidth={2.5} />
                     </button>
                     
-                    {/* Optional Middle Button (Chat/Superlike) placeholder if needed */}
-                    {/* <button className="w-12 h-12 rounded-full bg-white text-indigo-400 shadow-lg flex items-center justify-center hover:scale-105 transition-all">
-                        <MessageCircle size={24} />
-                    </button> */}
-
                     <button
                         onClick={() => activeCard && triggerSwipe('right')}
                         disabled={!activeCard}
@@ -291,7 +286,7 @@ export default function Matchmaking() {
                 </div>
             </div>
 
-            {/* MATCH OVERLAY */}
+            {/* MATCH OVERLAY ANIMATION */}
             <AnimatePresence>
                 {matchOverlay && (
                     <motion.div
@@ -310,6 +305,7 @@ export default function Matchmaking() {
                         </motion.h2>
 
                         <div className="relative w-full max-w-sm h-48 mb-12 flex justify-center items-center">
+                            {/* Avatar 1 (You) */}
                             <motion.div 
                                 initial={{ x: -50, rotate: -10, opacity: 0 }}
                                 animate={{ x: -30, rotate: -10, opacity: 1 }}
@@ -317,6 +313,8 @@ export default function Matchmaking() {
                             >
                                 <img src="https://ui-avatars.com/api/?name=You&background=random" alt="You" className="w-full h-full object-cover" />
                             </motion.div>
+                            
+                            {/* Avatar 2 (Match) */}
                             <motion.div 
                                 initial={{ x: 50, rotate: 10, opacity: 0 }}
                                 animate={{ x: 30, rotate: 10, opacity: 1 }}
@@ -324,6 +322,8 @@ export default function Matchmaking() {
                             >
                                 <img src={matchOverlay.image} alt={matchOverlay.name} className="w-full h-full object-cover" />
                             </motion.div>
+                            
+                            {/* Heart Icon in Middle */}
                             <div className="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl z-30">
                                 <Heart className="text-rose-500" fill="currentColor" size={24} />
                             </div>
