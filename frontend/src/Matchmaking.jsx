@@ -52,23 +52,19 @@ export default function Matchmaking() {
 
     const fetchCandidates = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = token ? { 
-                'Authorization': `Bearer ${token}`, 
-                'Accept': 'application/json' 
-            } : { 'Accept': 'application/json' };
-
             // Matches Route::get('/matches/candidates', ...) in api.php
             // const response = await fetch('/api/matches/candidates', { headers });
             const response = await api.get('matches/candidates');
             
-            if (response.ok) {
+            if (!response) {
+               console.log(response)
+                throw new Error("API Error");
+            } else {
                 const data = await response.json();
                 setCandidates(data);
                 console.log("Fetched candidates:", data);
-            } else {
-                throw new Error("API Error");
             }
+            
         } catch (error) {
             console.log("Using fallback data for demo");
             setCandidates([

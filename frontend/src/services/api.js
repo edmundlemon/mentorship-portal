@@ -3,7 +3,7 @@
 // Falls back to current origin for backward compatibility
 const API_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api`
-  : `${window.location.origin}/api`;
+  : `$localhost:8080/api`;
 
 
 export const api = {
