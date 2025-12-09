@@ -41,7 +41,7 @@ export default function MentorsDirectory() {
     const fetchMentors = async () => {
         // TO DO: Create Route::get('/mentors', ...) in Laravel
         // try {
-        //     const data = await api.get('/mentors');
+        //     const data = await api.get('mentors');
         //     setMentors(data);
         // } catch (error) { ... }
         

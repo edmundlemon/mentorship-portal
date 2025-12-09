@@ -16,7 +16,7 @@ export default function ForumPostDetail() {
 
     const loadPost = async () => {
         try {
-            const data = await api.get(`/forum/${id}`);
+            const data = await api.get(`forum/${id}`);
             setPost(data);
         } catch (error) {
             console.error('Failed to load post', error);
@@ -29,7 +29,7 @@ export default function ForumPostDetail() {
         e.preventDefault();
         if (!comment.trim()) return;
         try {
-            await api.post(`/forum/${id}/comments`, { content: comment });
+            await api.post(`forum/${id}/comments`, { content: comment });
             setComment('');
             loadPost();
         } catch (error) {

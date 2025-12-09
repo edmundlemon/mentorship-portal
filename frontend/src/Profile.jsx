@@ -4,7 +4,7 @@ import {
     ArrowLeft, Save, Camera, Mail, 
     BookOpen, Hash, Award, User, Sparkles 
 } from 'lucide-react';
-import * as api from './services/api'; 
+import {api} from './services/api'; 
 
 export default function Profile() {
     const navigate = useNavigate();
@@ -34,6 +34,7 @@ export default function Profile() {
             try {
                 // Assuming api.getUser returns { profile: ... }
                 const response = await api.getUser(token);
+				// const response = await api.get('profile');
                 if (response && response.profile) {
                     setProfile({
                         bio: response.profile.bio || '',

@@ -146,10 +146,14 @@ export default function Dashboard() {
                             </p>
 
                             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4">
-                                <button className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1 flex items-center gap-2">
+                                <button
+								onClick={() => navigate('/projects-directory')}
+								className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1 flex items-center gap-2">
                                     Find a Project <ArrowRight size={20} />
                                 </button>
-                                <button className="px-8 py-4 bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 rounded-xl font-bold text-lg transition-all">
+                                <button
+								onClick={() => navigate('/mentors-directory')}
+								className="px-8 py-4 bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 rounded-xl font-bold text-lg transition-all">
                                     Find a Mentor
                                 </button>
                             </div>

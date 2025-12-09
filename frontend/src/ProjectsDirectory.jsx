@@ -31,7 +31,7 @@ export default function ProjectsDirectory() {
     const fetchProjects = async () => {
         setLoading(true); // 1. Start Loading Effect
         try {
-            const data = await api.get('/projects');
+            const data = await api.get('projects');
             setProjects(data);
         } catch (error) {
             console.error('Failed to fetch projects', error);

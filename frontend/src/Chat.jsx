@@ -39,7 +39,7 @@ export default function Chat() {
 
     const loadMessages = async (userId) => {
         try {
-            const data = await api.get(`/chat/${userId}`);
+            const data = await api.get(`chat/${userId}`);
             setMessages(data);
         } catch (error) {
             console.error('Failed to load messages', error);
@@ -51,7 +51,7 @@ export default function Chat() {
         if (!newMessage.trim() || !selectedUser) return;
 
         try {
-            await api.post('/chat', {
+            await api.post('chat', {
                 receiver_id: selectedUser.id,
                 content: newMessage
             });

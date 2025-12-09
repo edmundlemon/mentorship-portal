@@ -1,9 +1,10 @@
-// src/services/api.js
+// Use environment variable if available, otherwise use same origin
+// Environment variable is set in .env file: VITE_API_URL
+// Falls back to current origin for backward compatibility
+const API_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : `${window.location.origin}/api`;
 
-// NOTE: If your Laravel backend is running on port 8000, use this URL.
-// If you are using Docker/Nginx where everything is on the same port, use window.location.origin + '/api'
-
-const API_URL = `${window.location.origin}/api`;
 
 export const api = {
     

@@ -5,10 +5,16 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0', // Allow access from outside container
+    port: 3005,
+    strictPort: true,
+    watch: {
+      usePolling: true, // Necessary for file watching in Docker
+    },
     proxy: {
       // Proxy API requests to the Laravel backend during development
       '/api': {
-        target: 'http://localhost:8080',
+        target: process.env.VITE_API_URL || 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       },

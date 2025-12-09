@@ -16,6 +16,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	// Matchmaking
 	Route::get('/matches/candidates', [App\Http\Controllers\MatchController::class, 'candidates']);
 	Route::post('/matches/swipe', [App\Http\Controllers\MatchController::class, 'swipe']);
+	Route::get('/matches/matched', [App\Http\Controllers\MatchController::class, 'matches']);
 
 	// Projects
 	Route::get('/projects', [App\Http\Controllers\ProjectController::class, 'index']);

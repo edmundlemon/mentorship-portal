@@ -1,28 +1,13 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 
+// Note: The frontend React application is now in the ./frontend directory
+// This Vite config is only for Laravel's resources (if any traditional blade views exist)
 export default defineConfig({
     plugins: [
-		react({
-            jsxRuntime: 'automatic',
-        }),
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ['resources/css/app.css'],
             refresh: true,
         }),
-        tailwindcss(),
     ],
-    server: {
-        host: '0.0.0.0',
-        port: 5173,
-        strictPort: true,
-        hmr: {
-            host: 'localhost',
-        },
-        watch: {
-            usePolling: true,
-        },
-    },
 });
