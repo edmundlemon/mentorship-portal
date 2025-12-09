@@ -5,6 +5,7 @@ import {
     ArrowLeft, Heart, X, GraduationCap, Briefcase, Info, MessageCircle 
 } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
+import {api} 
 
 // --- CONFETTI COMPONENT ---
 const Confetti = () => (
@@ -54,7 +55,7 @@ export default function Matchmaking() {
             
             // Using a relative path so it works with your setup
             // Replace with your actual API endpoint if different
-            const response = await fetch('/api/matches/candidates', { headers });
+            const response = await fetch('api/matches/candidates', { headers });
             
             if (response.ok) {
                 const data = await response.json();
