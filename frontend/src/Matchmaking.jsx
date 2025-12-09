@@ -1,204 +1,355 @@
-// Matchmaking.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence, useMotionValue, useTransform, useAnimation } from 'framer-motion';
 import { 
-    ArrowLeft, X, Heart, MapPin, Briefcase, 
-    GraduationCap, Sparkles, MessageCircle 
+    ArrowLeft, Heart, X, GraduationCap, Briefcase, Info, MessageCircle 
 } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
 
+// --- CONFETTI COMPONENT ---
+const Confetti = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        {[...Array(20)].map((_, i) => (
+            <motion.div
+                key={i}
+                className={`absolute w-3 h-3 rounded-full ${['bg-rose-400', 'bg-teal-400', 'bg-amber-400', 'bg-indigo-400'][i % 4]}`}
+                initial={{ x: "50%", y: "50%", opacity: 1, scale: 0 }}
+                animate={{
+                    x: `${Math.random() * 100}%`,
+                    y: `${Math.random() * 100}%`,
+                    opacity: 0,
+                    scale: 1.5
+                }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+            />
+        ))}
+    </div>
+);
+
+// --- MAIN MATCHMAKING PAGE ---
 export default function Matchmaking() {
     const navigate = useNavigate();
+    const [candidates, setCandidates] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [candidates, setCandidates] = useState([
-        {
-            id: 1,
-            name: "Sarah Jenkins",
-            role: "Mentor",
-            major: "Computer Science PhD",
-            school: "MIT",
-            image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600",
-            bio: "Specializing in Natural Language Processing. I can help with Python, PyTorch, and grad school applications. Looking for dedicated mentees.",
-            skills: ["Python", "NLP", "Machine Learning"]
-        },
-        {
-            id: 2,
-            name: "David Chen",
-            role: "Student",
-            major: "Electrical Engineering",
-            school: "Stanford",
-            image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
-            bio: "Building autonomous drones. Looking for a mentor who understands embedded systems and real-time operating systems.",
-            skills: ["C++", "Robotics", "Circuit Design"]
-        },
-        {
-            id: 3,
-            name: "Emily Davis",
-            role: "Mentor",
-            major: "Bioinformatics Lead",
-            school: "Harvard Med",
-            image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=600",
-            bio: "Helping students bridge the gap between Biology and Data Science. Let's publish your first paper together.",
-            skills: ["Genomics", "R", "Statistics"]
-        }
-    ]);
+    const [loading, setLoading] = useState(true);
+    const [matchOverlay, setMatchOverlay] = useState(null);
+    const [showBio, setShowBio] = useState(false);
 
-    const currentCandidate = candidates[currentIndex];
+    // Motion values
+    const x = useMotionValue(0);
+    const controls = useAnimation();
+    
+    // Rotate card based on drag
+    const rotate = useTransform(x, [-200, 200], [-5, 5]);
+    
+    // Opacity overlays
+    const likeOpacity = useTransform(x, [50, 150], [0, 1]);
+    const nopeOpacity = useTransform(x, [-50, -150], [0, 1]);
 
-    const handleSwipe = async (direction) => {
-        if (!currentCandidate) return;
+    // --- API & LOGIC ---
 
-        // Simulate API delay/interaction
-        // const response = await fetch(...) 
+    useEffect(() => {
+        fetchCandidates();
+    }, []);
 
-        if (direction === 'right') {
-            console.log("Liked:", currentCandidate.name);
-            // You can add a visual "Match" popup here later
-        }
+    const fetchCandidates = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Handle no token (redirect to login or similar)
+                setLoading(false);
+                return;
+            }
 
-        if (currentIndex < candidates.length) {
-            setCurrentIndex(prev => prev + 1);
+            const response = await fetch('/api/matches/candidates', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setCandidates(data);
+            } else {
+                console.error("Failed to fetch");
+                // Fallback for demo purposes if API isn't running locally
+                setCandidates([]); 
+            }
+        } catch (error) {
+            console.error('Failed to fetch candidates', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    // --- SUB-COMPONENTS ---
-    
-    const SkillTag = ({ label }) => (
-        <span className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold border border-indigo-100">
-            {label}
-        </span>
-    );
+    // Triggered by Buttons or Drag Release
+    const triggerSwipe = async (direction) => {
+        if (currentIndex >= candidates.length) return;
 
-    const InfoRow = ({ icon: Icon, text }) => (
-        <div className="flex items-center gap-2 text-slate-600 text-sm mb-1">
-            <Icon size={16} className="text-slate-400" />
-            <span>{text}</span>
+        // 1. Animate off screen
+        await controls.start({ 
+            x: direction === 'right' ? 500 : -500, 
+            transition: { duration: 0.3 } 
+        });
+
+        // 2. Process logic
+        await processSwipe(direction);
+    };
+
+    const onDragEnd = (event, info) => {
+        const threshold = 100;
+        if (info.offset.x > threshold) {
+            triggerSwipe('right');
+        } else if (info.offset.x < -threshold) {
+            triggerSwipe('left');
+        } else {
+            controls.start({ x: 0 });
+        }
+    };
+
+    const processSwipe = async (direction) => {
+        const currentCandidate = candidates[currentIndex];
+        if (!currentCandidate) return;
+
+        // Reset UI state for next card
+        setShowBio(false);
+        
+        // Optimistically increment index (animation is already done)
+        // Reset motion values instantly for the next card
+        x.set(0);
+        controls.set({ x: 0 });
+        
+        if (currentIndex < candidates.length) {
+            setCurrentIndex(prev => prev + 1);
+        }
+
+        // Call API
+        try {
+            const response = await fetch('/api/matches/swipe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    candidate_id: currentCandidate.id,
+                    direction: direction
+                })
+            });
+
+            const result = await response.json();
+            
+            // If matched, show the fancy overlay
+            if (result.matched) {
+                setMatchOverlay(currentCandidate);
+            }
+        } catch (error) {
+            console.error('Swipe failed', error);
+        }
+    };
+
+    const activeCard = candidates[currentIndex];
+    const nextCard = candidates[currentIndex + 1];
+
+    if (loading) return (
+        <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-rose-500"></div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-8 px-4">
-            
-            {/* Header / Nav */}
-            <div className="w-full max-w-md flex items-center justify-between mb-6">
-                <button 
-                    onClick={() => navigate('/dashboard')}
-                    className="p-2 rounded-full hover:bg-white hover:shadow-sm text-slate-500 transition-all"
-                >
-                    <ArrowLeft size={24} />
-                </button>
-                <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <Sparkles className="text-pink-500" size={20} fill="currentColor" />
-                    Discover
-                </h1>
-                <div className="w-10" /> {/* Spacer for centering */}
+        <div className="h-screen w-screen bg-gray-50 text-gray-900 flex flex-col overflow-hidden font-sans">
+            <Toaster position="top-center" />
+
+            <div className="flex-1 flex flex-col relative overflow-hidden">
+                {/* Top Nav (Back Button) */}
+                <div className="px-6 py-6 flex justify-between items-center w-full max-w-md mx-auto shrink-0 z-20">
+                    <button 
+                        onClick={() => navigate('/dashboard')} 
+                        className="p-2 bg-white border border-gray-200 shadow-sm rounded-full text-gray-400 hover:text-gray-900 transition-colors"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div className="w-10" /> 
+                </div>
+
+                {/* Cards Container */}
+                <div className="flex-1 flex items-center justify-center relative w-full max-w-md mx-auto px-4 min-h-0">
+                    <div className="relative w-full h-[65vh] max-h-[600px] aspect-[3/4]">
+                        <AnimatePresence>
+                            {/* Background Card */}
+                            {nextCard && (
+                                <div 
+                                    key={nextCard.id}
+                                    className="absolute inset-0 bg-white rounded-3xl border border-gray-200 transform scale-95 translate-y-4 opacity-100 shadow-lg overflow-hidden"
+                                >
+                                    <img src={nextCard.image} alt="" className="w-full h-full object-cover grayscale opacity-50" />
+                                </div>
+                            )}
+
+                            {/* Active Card */}
+                            {activeCard ? (
+                                <motion.div
+                                    key={activeCard.id}
+                                    style={{ x, rotate }}
+                                    animate={controls}
+                                    drag="x"
+                                    dragConstraints={{ left: 0, right: 0 }}
+                                    onDragEnd={onDragEnd}
+                                    className="absolute inset-0 rounded-3xl shadow-xl cursor-grab active:cursor-grabbing overflow-hidden bg-white border border-gray-200"
+                                    onClick={() => setShowBio(!showBio)} 
+                                >
+                                    {/* Like/Nope Stamps */}
+                                    <motion.div style={{ opacity: likeOpacity }} className="absolute top-8 left-8 z-30 bg-rose-500 text-white font-bold text-2xl px-6 py-2 rounded-full transform -rotate-12 shadow-lg border-2 border-white">
+                                        LIKE
+                                    </motion.div>
+                                    <motion.div style={{ opacity: nopeOpacity }} className="absolute top-8 right-8 z-30 bg-slate-500 text-white font-bold text-2xl px-6 py-2 rounded-full transform rotate-12 shadow-lg border-2 border-white">
+                                        NOPE
+                                    </motion.div>
+
+                                    {!showBio ? (
+                                        <>
+                                            <img src={activeCard.image} alt={activeCard.name} className="w-full h-full object-cover pointer-events-none" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                                <div className="flex gap-2 mb-3">
+                                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-xs font-semibold text-white flex items-center gap-1">
+                                                        <Briefcase size={12} /> {activeCard.role}
+                                                    </span>
+                                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-xs font-semibold text-white flex items-center gap-1">
+                                                        <GraduationCap size={12} /> {activeCard.major}
+                                                    </span>
+                                                </div>
+                                                <h2 className="text-3xl font-bold mb-1 text-white">{activeCard.name}, <span className="font-normal opacity-90">{activeCard.age}</span></h2>
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    {activeCard.skills?.slice(0, 3).map((skill, i) => (
+                                                        <span key={i} className="text-xs font-medium text-gray-300">• {skill}</span>
+                                                    ))}
+                                                </div>
+                                                <div className="absolute bottom-6 right-6">
+                                                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-full">
+                                                        <Info className="text-white" size={20} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="absolute inset-0 bg-white p-6 flex flex-col justify-center items-center text-center">
+                                            <div className="w-24 h-24 rounded-full overflow-hidden p-1 border border-gray-200 mb-6 shadow-sm">
+                                                <img src={activeCard.image} alt="" className="w-full h-full object-cover rounded-full" />
+                                            </div>
+                                            <h2 className="text-2xl font-bold text-gray-900 mb-1">{activeCard.name}</h2>
+                                            <p className="text-rose-500 font-medium text-sm mb-6 uppercase tracking-wide">{activeCard.major}</p>
+                                            <div className="flex-1 overflow-y-auto mb-4 scrollbar-hide">
+                                                <p className="text-gray-600 leading-relaxed text-lg font-serif italic">"{activeCard.bio}"</p>
+                                            </div>
+                                            <div className="flex flex-wrap justify-center gap-2 mb-8">
+                                                {activeCard.skills?.map((skill, i) => (
+                                                    <span key={i} className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 font-medium">{skill}</span>
+                                                ))}
+                                            </div>
+                                            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Tap to flip back</p>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            ) : (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                                    <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                        <Briefcase className="opacity-30 text-gray-500" />
+                                    </div>
+                                    <p>No more profiles nearby.</p>
+                                    <button onClick={() => fetchCandidates()} className="mt-4 text-rose-500 font-bold text-sm hover:underline">Refresh</button>
+                                </div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+
+                {/* BOTTOM ACTION BUTTONS */}
+                <div className="w-full max-w-md mx-auto px-6 pb-8 pt-4 flex items-center justify-center gap-8 shrink-0 z-20">
+                    <button
+                        onClick={() => activeCard && triggerSwipe('left')}
+                        disabled={!activeCard}
+                        className="w-16 h-16 rounded-full bg-white text-slate-400 shadow-xl flex items-center justify-center hover:text-rose-500 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                        <X size={32} strokeWidth={2.5} />
+                    </button>
+                    
+                    {/* Optional Middle Button (Chat/Superlike) placeholder if needed */}
+                    {/* <button className="w-12 h-12 rounded-full bg-white text-indigo-400 shadow-lg flex items-center justify-center hover:scale-105 transition-all">
+                        <MessageCircle size={24} />
+                    </button> */}
+
+                    <button
+                        onClick={() => activeCard && triggerSwipe('right')}
+                        disabled={!activeCard}
+                        className="w-16 h-16 rounded-full bg-rose-500 text-white shadow-xl shadow-rose-500/30 flex items-center justify-center hover:bg-rose-600 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                        <Heart size={32} fill="currentColor" />
+                    </button>
+                </div>
             </div>
 
-            {/* Main Card Area */}
-            <div className="w-full max-w-md h-[650px] relative perspective-1000">
-                {currentCandidate ? (
-                    <div className="w-full h-full bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col relative animate-in zoom-in-95 duration-300">
-                        
-                        {/* Image Section */}
-                        <div className="h-[55%] relative">
-                            <img 
-                                src={currentCandidate.image} 
-                                alt={currentCandidate.name}
-                                className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            
-                            {/* Floating Role Badge */}
-                            <div className="absolute top-4 left-4">
-                                <span className={`px-4 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-lg border border-white/20 text-white
-                                    ${currentCandidate.role === 'Mentor' ? 'bg-purple-500/80' : 'bg-emerald-500/80'}`
-                                }>
-                                    {currentCandidate.role}
-                                </span>
-                            </div>
-
-                            {/* Name Overlay */}
-                            <div className="absolute bottom-0 left-0 p-6 text-white w-full">
-                                <h2 className="text-3xl font-bold leading-tight">{currentCandidate.name}</h2>
-                                <p className="opacity-90 font-medium text-lg">{currentCandidate.major}</p>
-                            </div>
-                        </div>
-
-                        {/* Details Section */}
-                        <div className="flex-1 p-6 flex flex-col">
-                            
-                            {/* Key Info */}
-                            <div className="mb-4 space-y-2">
-                                <InfoRow icon={GraduationCap} text={currentCandidate.school} />
-                                <InfoRow icon={Briefcase} text={currentCandidate.role === 'Mentor' ? 'Available for Mentorship' : 'Looking for Mentorship'} />
-                            </div>
-
-                            {/* Tags */}
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                {currentCandidate.skills.map((skill, i) => (
-                                    <SkillTag key={i} label={skill} />
-                                ))}
-                            </div>
-
-                            {/* Bio - Scrollable if long */}
-                            <div className="flex-1 overflow-y-auto pr-2 mb-4">
-                                <p className="text-slate-500 text-sm leading-relaxed">
-                                    "{currentCandidate.bio}"
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Action Buttons (Floating) */}
-                        <div className="absolute bottom-6 left-0 right-0 flex justify-center items-center gap-6 z-10">
-                            {/* Pass Button */}
-                            <button 
-                                onClick={() => handleSwipe('left')}
-                                className="w-14 h-14 bg-white rounded-full shadow-xl shadow-slate-200 text-slate-400 border border-slate-100 flex items-center justify-center hover:bg-slate-50 hover:text-red-500 hover:scale-110 transition-all duration-200"
-                            >
-                                <X size={28} strokeWidth={2.5} />
-                            </button>
-
-                            {/* Super Like / Message (Optional) */}
-                            <button className="w-10 h-10 bg-indigo-50 rounded-full text-indigo-600 flex items-center justify-center hover:bg-indigo-100 hover:scale-110 transition-all duration-200">
-                                <MessageCircle size={20} />
-                            </button>
-
-                            {/* Like Button */}
-                            <button 
-                                onClick={() => handleSwipe('right')}
-                                className="w-14 h-14 bg-gradient-to-tr from-pink-500 to-rose-500 rounded-full shadow-xl shadow-pink-200 text-white flex items-center justify-center hover:brightness-110 hover:scale-110 hover:rotate-3 transition-all duration-200"
-                            >
-                                <Heart size={28} fill="currentColor" strokeWidth={0} />
-                            </button>
-                        </div>
-
-                    </div>
-                ) : (
-                    // Empty State
-                    <div className="w-full h-full bg-white rounded-3xl shadow-xl border border-slate-200 flex flex-col items-center justify-center p-8 text-center animate-in fade-in">
-                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                            <Sparkles size={48} className="text-slate-300" />
-                        </div>
-                        <h2 className="text-2xl font-bold text-slate-900 mb-2">That's everyone!</h2>
-                        <p className="text-slate-500 mb-8 max-w-xs mx-auto">
-                            You've seen all potential matches for today. Check back later or adjust your filters.
-                        </p>
-                        <button 
-                            onClick={() => {
-                                setCandidates([...candidates]); // Reset for demo
-                                setCurrentIndex(0);
-                            }}
-                            className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all"
+            {/* MATCH OVERLAY */}
+            <AnimatePresence>
+                {matchOverlay && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+                    >
+                        <Confetti />
+                        <motion.h2 
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            className="text-5xl font-bold text-white mb-12"
                         >
-                            Start Over
-                        </button>
-                    </div>
+                            It's a Match!
+                        </motion.h2>
+
+                        <div className="relative w-full max-w-sm h-48 mb-12 flex justify-center items-center">
+                            <motion.div 
+                                initial={{ x: -50, rotate: -10, opacity: 0 }}
+                                animate={{ x: -30, rotate: -10, opacity: 1 }}
+                                className="absolute w-32 h-32 rounded-2xl border-4 border-white overflow-hidden shadow-2xl z-10"
+                            >
+                                <img src="https://ui-avatars.com/api/?name=You&background=random" alt="You" className="w-full h-full object-cover" />
+                            </motion.div>
+                            <motion.div 
+                                initial={{ x: 50, rotate: 10, opacity: 0 }}
+                                animate={{ x: 30, rotate: 10, opacity: 1 }}
+                                className="absolute w-32 h-32 rounded-2xl border-4 border-white overflow-hidden shadow-2xl z-20"
+                            >
+                                <img src={matchOverlay.image} alt={matchOverlay.name} className="w-full h-full object-cover" />
+                            </motion.div>
+                            <div className="absolute w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-xl z-30">
+                                <Heart className="text-rose-500" fill="currentColor" size={24} />
+                            </div>
+                        </div>
+
+                        <p className="text-gray-300 text-center mb-8 max-w-xs">
+                            You and <span className="font-bold text-white">{matchOverlay.name}</span> have liked each other.
+                        </p>
+
+                        <div className="w-full max-w-xs space-y-3 z-10">
+                            <button
+                                onClick={() => navigate(`/chat/${matchOverlay.id}`)}
+                                className="w-full py-4 bg-rose-500 rounded-xl font-bold text-white hover:bg-rose-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-900/20"
+                            >
+                                <MessageCircle size={20} /> Send Message
+                            </button>
+                            <button
+                                onClick={() => setMatchOverlay(null)}
+                                className="w-full py-4 bg-transparent border border-white/30 rounded-xl font-bold text-white hover:bg-white/10 transition-all"
+                            >
+                                Keep Swiping
+                            </button>
+                        </div>
+                    </motion.div>
                 )}
-            </div>
-            
-            <p className="text-xs text-slate-400 mt-8 font-medium">
-                Swipe right to connect, left to skip
-            </p>
+            </AnimatePresence>
         </div>
     );
 }
