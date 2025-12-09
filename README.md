@@ -44,6 +44,10 @@ A collaborative platform for STEM students to find mentors and peers.
     - **API**: [http://localhost:8080/api](http://localhost:8080/api)
     - **Mailpit (emails)**: [http://localhost:8025](http://localhost:8025)
 
+6. **Test Account for the Application**
+    - email: test@example.com
+    - password: password
+
 ### Useful Docker Commands
 
 ```powershell
