@@ -100,15 +100,15 @@ docker compose exec laravel.test bash
     ```
 
 4. **Access the App**:
-    - **Main App**: [http://localhost](http://localhost) ← **USE THIS**
+    - **Main App**: [http://localhost:3005](http://localhost:3005) ← **USE THIS**
     - Vite Dev Server: http://localhost:5173 (for HMR only)
 
 ## Important URLs
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| **Frontend (React App)** | `http://localhost` | Main application |
-| **API Endpoints** | `http://localhost/api/*` | Backend API |
+| **Frontend (React App)** | `http://localhost:3005` | Main application |
+| **API Endpoints** | `http://localhost:8080/api/*` | Backend API |
 | **Mailpit (Email Testing)** | `http://localhost:8025` | View test emails |
 | Vite HMR | `http://localhost:5173` | Hot reload (dev only) |
 
