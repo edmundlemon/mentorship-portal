@@ -31,6 +31,14 @@ export default function Chat() {
     const loadConversations = async () => {
         try {
             const data = await api.get('chat');
+			const matchedUser = await api.get('matches/matched');
+			console.log('matched users:', matchedUser);
+			console.log('Chat data:', data);
+			for (const match of matchedUser) {
+				if (!data.find(user => user.id === match.candidate.id) && match.candidate.id !== currentUser.id) {
+					data.push(match.candidate);
+				}
+			}
             setConversations(data);
         } catch (error) {
             console.error('Failed to load conversations', error);

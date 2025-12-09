@@ -444,7 +444,18 @@ class DatabaseSeeder extends Seeder
 		UserMatch::where('user_id', $testUser->id)
 			->where('candidate_id', $mentor1->id)
 			->update(['status' => 'matched']);
+			
+		UserMatch::create([
+			'user_id' => $testUser->id,
+			'candidate_id' => $mentor4->id,
+			'status' => 'matched',
+		]);
 
+		UserMatch::create([
+			'user_id' => $mentor4->id,
+			'candidate_id' => $testUser->id,
+			'status' => 'matched',
+		]);
 		// More matches between mentors and students
 		UserMatch::create([
 			'user_id' => $mentee1->id,
