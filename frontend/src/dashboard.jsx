@@ -1,100 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     ArrowRight, Users, Lightbulb, GraduationCap, 
-    Search, TrendingUp, Sparkles, MapPin, BadgeCheck,
-    Heart, Briefcase, Zap 
+    TrendingUp, Sparkles, Briefcase, Zap, Loader2 
 } from 'lucide-react';
+
+// ✅ FIX: Import the api correctly (same as in ProjectsDirectory)
+// Adjust the path '../services/api' based on your folder structure
+import { api } from './services/api'; 
 
 export default function Dashboard() {
     const navigate = useNavigate();
+    
+    // --- STATE MANAGEMENT ---
+    const [projects, setProjects] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // --- MOCK DATA ---
+    // --- API LOGIC ---
+    useEffect(() => {
+        fetchProjects();
+    }, []);
 
-    const mentors = [
-        {
-            id: 1,
-            name: "Dr. Alice Johnson",
-            role: "AI Research Lead",
-            institution: "MIT",
-            avatar: "https://randomuser.me/portraits/women/44.jpg",
-            expertise: ["Machine Learning", "Neural Networks"],
-            available: true
-        },
-        {
-            id: 2,
-            name: "Prof. Mark Smith",
-            role: "Cybersecurity Analyst",
-            institution: "Stanford",
-            avatar: "https://randomuser.me/portraits/men/46.jpg",
-            expertise: ["Ethical Hacking", "Network Security"],
-            available: false
-        },
-        {
-            id: 3,
-            name: "Dr. Linda Lee",
-            role: "Data Scientist",
-            institution: "Berkeley",
-            avatar: "https://randomuser.me/portraits/women/65.jpg",
-            expertise: ["Big Data", "Visualization"],
-            available: true
-        },
-        {
-            id: 4,
-            name: "James Brown",
-            role: "Senior Architect",
-            institution: "Google",
-            avatar: "https://randomuser.me/portraits/men/52.jpg",
-            expertise: ["System Design", "Cloud Arch"],
-            available: true
-        },
-    ];
-
-    const projects = [
-        {
-            id: 1,
-            title: "Autonomous Drone Navigation",
-            description: "Developing a SLAM algorithm for indoor drone navigation using LiDAR.",
-            status: "In-progress",
-            members: 3,
-            maxMembers: 4,
-            tags: ["Robotics", "C++", "ROS"],
-            author: "Engineering Dept"
-        },
-        {
-            id: 2,
-            title: "Sustainable Energy Grid",
-            description: "Optimizing solar panel efficiency using predictive AI models.",
-            status: "Open",
-            members: 1,
-            maxMembers: 5,
-            tags: ["Green Tech", "Python", "AI"],
-            author: "Physics Lab"
-        },
-        {
-            id: 3,
-            title: "Bio-Informatics Database",
-            description: "Creating a graph database for protein folding sequences.",
-            status: "Closed",
-            members: 4,
-            maxMembers: 4,
-            tags: ["Biology", "SQL", "Data"],
-            author: "Med School"
-        },
-        {
-            id: 4,
-            title: "Smart Campus App",
-            description: "Mobile application for tracking campus bus routes in real-time.",
-            status: "Open",
-            members: 2,
-            maxMembers: 6,
-            tags: ["React Native", "Firebase"],
-            author: "CS Club"
+    const fetchProjects = async () => {
+        setLoading(true); 
+        try {
+            // This works now because 'api' is imported
+            const data = await api.get('projects'); 
+            
+            // Ensure consistency with how ProjectsDirectory handles data
+            setProjects(data); 
+        } catch (error) {
+            console.error('Failed to fetch projects', error);
+        } finally {
+            setLoading(false); 
         }
-    ];
+    };
 
     // --- HELPER FUNCTIONS ---
-
     const getStatusColor = (status) => {
         switch(status) {
             case 'Open': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
@@ -104,7 +46,7 @@ export default function Dashboard() {
         }
     };
 
-    // Sub-component for Tool Cards (Matchmaking, etc.)
+    // Sub-component for Tool Cards
     const ToolCard = ({ title, desc, icon: Icon, color, onClick }) => (
         <button 
             onClick={onClick}
@@ -147,13 +89,13 @@ export default function Dashboard() {
 
                             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4">
                                 <button
-								onClick={() => navigate('/projects-directory')}
-								className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1 flex items-center gap-2">
+                                onClick={() => navigate('/projects-directory')}
+                                className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all transform hover:-translate-y-1 flex items-center gap-2">
                                     Find a Project <ArrowRight size={20} />
                                 </button>
                                 <button
-								onClick={() => navigate('/mentors-directory')}
-								className="px-8 py-4 bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 rounded-xl font-bold text-lg transition-all">
+                                onClick={() => navigate('/mentors-directory')}
+                                className="px-8 py-4 bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 rounded-xl font-bold text-lg transition-all">
                                     Find a Mentor
                                 </button>
                             </div>
@@ -195,7 +137,7 @@ export default function Dashboard() {
             {/* --- MAIN CONTENT --- */}
            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 mt-16">
                 
-                {/* 1. TOOLS SECTION (New) */}
+                {/* 1. TOOLS SECTION */}
                 <section>
                     <div className="flex items-center gap-2 mb-6">
                         <Sparkles className="text-indigo-600" size={24} />
@@ -207,7 +149,7 @@ export default function Dashboard() {
                         <ToolCard 
                             title="Mentor Match"
                             desc="Swipe to find your perfect mentor based on skills and interests."
-                            icon={Heart}
+                            icon={Users}
                             color="bg-pink-50 text-pink-600"
                             onClick={() => navigate('/matchmaking')}
                         />
@@ -218,7 +160,7 @@ export default function Dashboard() {
                             desc="Find open research positions and hackathon teams."
                             icon={Briefcase}
                             color="bg-emerald-50 text-emerald-600"
-                            onClick={() => console.log("Navigate to projects")}
+                            onClick={() => navigate('/projects-directory')}
                         />
 
                         {/* Skills Card */}
@@ -232,60 +174,7 @@ export default function Dashboard() {
                     </div>
                 </section>
 
-                {/* 2. MENTORS SECTION */}
-                <section>
-                    <div className="flex justify-between items-end mb-8">
-                        <div>
-                            <h2 className="text-3xl font-bold text-slate-900">Featured Mentors</h2>
-                            <p className="text-slate-500 mt-2">Learn from industry experts and researchers.</p>
-                        </div>
-                        <button 
-                            onClick={() => navigate("/mentors-directory")}
-                            className="hidden sm:flex items-center gap-1 text-indigo-600 font-bold hover:gap-2 transition-all">
-                            View all mentors <ArrowRight size={18} />
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {mentors.map((mentor) => (
-                            <div key={mentor.id} className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300">
-                                <div className="relative mb-4">
-                                    <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-slate-50 mx-auto shadow-sm">
-                                        <img src={mentor.avatar} alt={mentor.name} className="w-full h-full object-cover" />
-                                    </div>
-                                    {mentor.available && (
-                                        <span className="absolute bottom-0 right-1/2 translate-x-10 bg-green-500 w-4 h-4 rounded-full border-2 border-white" title="Available"></span>
-                                    )}
-                                </div>
-                                
-                                <div className="text-center mb-4">
-                                    <h3 className="text-lg font-bold text-slate-900 flex items-center justify-center gap-1">
-                                        {mentor.name}
-                                        <BadgeCheck size={16} className="text-blue-500" />
-                                    </h3>
-                                    <p className="text-indigo-600 text-sm font-medium">{mentor.role}</p>
-                                    <div className="flex items-center justify-center gap-1 text-slate-400 text-xs mt-1">
-                                        <MapPin size={12} /> {mentor.institution}
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-wrap justify-center gap-2 mb-6">
-                                    {mentor.expertise.map((skill, idx) => (
-                                        <span key={idx} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md">
-                                            {skill}
-                                        </span>
-                                    ))}
-                                </div>
-
-                                <button className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all">
-                                    View Profile
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* 3. PROJECTS SECTION */}
+                {/* 2. PROJECTS SECTION (DYNAMIC) */}
                 <section>
                     <div className="flex justify-between items-end mb-8">
                         <div>
@@ -299,56 +188,68 @@ export default function Dashboard() {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {projects.map((project) => (
-                            <div key={project.id} className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-4">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(project.status)}`}>
-                                        {project.status}
-                                    </span>
-                                    <span className="text-slate-400 text-xs font-medium">{project.author}</span>
-                                </div>
-
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">{project.title}</h3>
-                                <p className="text-slate-500 text-sm mb-6 flex-1 leading-relaxed">
-                                    {project.description}
-                                </p>
-
-                                <div className="space-y-4">
-                                    {/* Progress Bar for Members */}
-                                    <div>
-                                        <div className="flex justify-between text-xs font-semibold mb-1">
-                                            <span className="text-slate-500 flex items-center gap-1">
-                                                <Users size={14} /> Team Size
-                                            </span>
-                                            <span className={project.members >= project.maxMembers ? 'text-red-500' : 'text-indigo-600'}>
-                                                {project.members} / {project.maxMembers}
-                                            </span>
-                                        </div>
-                                        <div className="w-full bg-slate-100 rounded-full h-2">
-                                            <div 
-                                                className="bg-indigo-600 h-2 rounded-full transition-all" 
-                                                style={{ width: `${(project.members / project.maxMembers) * 100}%` }}
-                                            ></div>
-                                        </div>
+                    {/* Loading State */}
+                    {loading ? (
+                        <div className="flex justify-center items-center py-20">
+                            <Loader2 className="animate-spin text-indigo-600" size={48} />
+                        </div>
+                    ) : (
+                        /* Projects Grid */
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {projects.length > 0 ? projects.map((project) => (
+                                <div key={project.id} className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all flex flex-col h-full">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(project.status)}`}>
+                                            {project.status}
+                                        </span>
+                                        <span className="text-slate-400 text-xs font-medium">{project.author}</span>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                                        <div className="flex gap-2">
-                                            {project.tags.slice(0, 2).map((tag, idx) => (
-                                                <span key={idx} className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md">
-                                                    #{tag}
+                                    <h3 className="text-xl font-bold text-slate-900 mb-2">{project.title}</h3>
+                                    <p className="text-slate-500 text-sm mb-6 flex-1 leading-relaxed">
+                                        {project.description}
+                                    </p>
+
+                                    <div className="space-y-4">
+                                        {/* Progress Bar for Members */}
+                                        <div>
+                                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                                <span className="text-slate-500 flex items-center gap-1">
+                                                    <Users size={14} /> Team Size
                                                 </span>
-                                            ))}
+                                                <span className={project.members >= project.maxMembers ? 'text-red-500' : 'text-indigo-600'}>
+                                                    {project.members} / {project.maxMembers}
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-2">
+                                                <div 
+                                                    className="bg-indigo-600 h-2 rounded-full transition-all" 
+                                                    style={{ width: `${(project.members / project.maxMembers) * 100}%` }}
+                                                ></div>
+                                            </div>
                                         </div>
-                                        <button className="text-sm font-bold text-indigo-600 hover:underline">
-                                            Details
-                                        </button>
+
+                                        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                                            <div className="flex gap-2">
+                                                {project.tags && project.tags.slice(0, 2).map((tag, idx) => (
+                                                    <span key={idx} className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded-md">
+                                                        #{tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <button className="text-sm font-bold text-indigo-600 hover:underline">
+                                                Details
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            )) : (
+                                <div className="col-span-2 text-center py-10 text-slate-500">
+                                    No projects found at the moment.
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </section>
 
             </div>

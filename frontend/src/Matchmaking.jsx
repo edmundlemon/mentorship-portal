@@ -52,24 +52,26 @@ export default function Matchmaking() {
 
     const fetchCandidates = async () => {
         try {
-            // Matches Route::get('/matches/candidates', ...) in api.php
-            // const response = await fetch('/api/matches/candidates', { headers });
             const response = await api.get('matches/candidates');
             
-            if (!response) {
-               console.log(response)
-                throw new Error("API Error");
-            } else {
-                const data = await response.json();
-                setCandidates(data);
-                console.log("Fetched candidates:", data);
+            // CHECK 1: If your api.get returns the full Axios response object:
+            // Axios stores the actual server data inside the .data property
+            if (response && response.data) {
+                setCandidates(response.data);
+                console.log("Fetched candidates:", response.data);
+            } 
+            // CHECK 2: If your 'api' wrapper already returns the data directly:
+            else if (response) {
+                 setCandidates(response);
             }
             
         } catch (error) {
+            // ALWAYS log the actual error so you know why it failed
+            console.error("API Error Details:", error); 
+            
             console.log("Using fallback data for demo");
             setCandidates([
-                { id: 1, name: 'Sarah Chen', age: 24, major: 'Computer Science', role: 'Mentor', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800', skills: ['React', 'Python', 'AI'], bio: 'Researching neural networks.' },
-                { id: 2, name: 'Marcus Johnson', age: 22, major: 'Business', role: 'Mentee', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800', skills: ['Marketing', 'Public Speaking'], bio: 'Aspiring entrepreneur.' },
+                // ... your fallback data
             ]);
         } finally {
             setLoading(false);
@@ -93,6 +95,7 @@ export default function Matchmaking() {
         const currentCandidate = candidates[currentIndex];
         if (!currentCandidate) return;
 
+        // 1. UI Animation (Card flies away immediately so the user doesn't wait)
         setShowBio(false);
         if (currentIndex < candidates.length) {
             setTimeout(() => {
@@ -102,29 +105,31 @@ export default function Matchmaking() {
             }, 300);
         }
 
-        // --- MATCH LOGIC ---
-        if (direction === 'right') {
-            setMatchOverlay(currentCandidate); // Show match overlay immediately
-            
-            // Send to API silently
-            try {
-                const token = localStorage.getItem('token');
-                if(token) {
-                    await fetch('/api/matches/swipe', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            candidate_id: currentCandidate.id,
-                            direction: direction
-                        })
-                    });
-                }
-            } catch (e) { console.error(e); }
+        // 2. Send Data to Server
+        try {
+            // Your api.post wrapper automatically does response.json()
+            // So 'result' is the actual JSON object from the server
+            const result = await api.post('matches/swipe', {
+                candidate_id: currentCandidate.id,
+                direction: direction
+            });
+
+            console.log("Server response:", result);
+
+            // 3. Check if it is a match
+            // We check if direction is right AND if the server said match: true
+            if (direction === 'right' && (result.match === true || result.match === 'true')) {
+                setMatchOverlay(currentCandidate);
+            }
+            // If result.match is false, nothing happens (card just keeps flying away)
+
+        } catch (error) {
+            console.error("Swipe failed:", error);
+            // Optional: You could show a toast error here
         }
     };
+
+   
 
     const activeCard = candidates[currentIndex];
     const nextCard = candidates[currentIndex + 1];

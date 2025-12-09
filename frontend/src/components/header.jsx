@@ -19,7 +19,7 @@ export default function Header() {
     // Navigation Configuration
     const navItems = [
         { label: "Dashboard", path: "/dashboard" },
-        { label: "Mentors", path: "/mentors-directory" },
+        { label: "Match Making", path: "/matchmaking" },
         { label: "Projects", path: "/projects-directory" },
         { label: "Forum", path: "/forum" }, // Renamed from Community
     ];
